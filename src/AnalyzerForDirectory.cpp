@@ -72,12 +72,12 @@ void AnalyzerForDirectory::processFile(const fs::path &path, StatisticOfDirector
         // count chars
         statistic->numberChars += line.size() + 1; // '\n' between lines and end-of-file character.
         // count words
-        countWords(line, statistic);
+        countWordsAndLetters(line, statistic);
     }
     ifstream.close();
 }
 
-void AnalyzerForDirectory::countWords(const std::string &text, StatisticOfDirectory *statistic) {
+void AnalyzerForDirectory::countWordsAndLetters(const std::string &text, StatisticOfDirectory *statistic) {
     bool lastSeparate = true;
     for (auto c: text) {
         if (isSeparateChar(c)) {

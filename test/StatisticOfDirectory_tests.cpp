@@ -1,7 +1,6 @@
-#include "StatisticOfDirectory.h"
 #include "../src/StatisticOfDirectory.h"
 
-#include <gtest/gtest.h> // googletest header file
+#include <gtest/gtest.h>
 
 static void incrementAllField(StatisticOfDirectory *statistic) {
     statistic->numberFiles++;

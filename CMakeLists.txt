@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.21)
 project(AnalyticsForDirectories)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.out")
 
 add_library(source
         src/StatisticOfDirectory.cpp src/StatisticOfDirectory.h
         src/AnalyzerForDirectory.cpp src/AnalyzerForDirectory.h
-        src/FileIterator.cpp src/FileIterator.h)
+        src/FileIterator.cpp src/FileIterator.h
+        src/utils.cpp src/utils.h)
 
 add_executable(analytics_for_directories
         src/main.cpp)
@@ -27,7 +29,8 @@ FetchContent_MakeAvailable(googleTest)
 add_executable(
         unit_tests
         test/StatisticOfDirectory_tests.cpp
-)
+        test/FileIterator_tests.cpp
+        test/AnalyzerForDirectory_tests.cpp)
 
 target_link_libraries(
         unit_tests

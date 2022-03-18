@@ -17,12 +17,15 @@ public:
 
     StatisticOfDirectory process(const fs::path &pathForAnalyze);
 
-private:
-    static void processInThread(FileIterator& iterator, StatisticOfDirectory& commonStatistic);
+    virtual ~AnalyzerForDirectory() = default;
+
+protected:
+
+    static void processInThread(FileIterator &iterator, StatisticOfDirectory &commonStatistic);
 
     static void processFile(const fs::path &path, StatisticOfDirectory *statistic);
 
-    static void countWords(const std::string &text, StatisticOfDirectory *statistic);
+    static void countWordsAndLetters(const std::string &text, StatisticOfDirectory *statistic);
 
     static bool isSeparateChar(char c);
 
