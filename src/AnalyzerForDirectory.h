@@ -3,18 +3,29 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <thread>
 #include "StatisticOfDirectory.h"
+#include "FileIterator.h"
 
 namespace fs = std::filesystem;
 
 class AnalyzerForDirectory {
 public:
+    AnalyzerForDirectory();
+
+    explicit AnalyzerForDirectory(size_t numberThreads);
+
     StatisticOfDirectory process(const fs::path &pathForAnalyze);
 
 private:
-    void processFile(const fs::directory_entry &entry, StatisticOfDirectory *statistic);
+    static void processInThread(FileIterator& iterator, StatisticOfDirectory& commonStatistic);
 
-    void countWords(const std::string &text, StatisticOfDirectory *statistic);
+    static void processFile(const fs::path &path, StatisticOfDirectory *statistic);
 
-    bool isSeparateChar(char c);
+    static void countWords(const std::string &text, StatisticOfDirectory *statistic);
+
+    static bool isSeparateChar(char c);
+
+    size_t numberThreads;
+    std::vector<std::thread> pool;
 };

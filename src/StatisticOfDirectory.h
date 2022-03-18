@@ -1,16 +1,26 @@
 #pragma once
 
 #include <string>
+#include <ostream>
+#include <mutex>
+#include <atomic>
 
 struct StatisticOfDirectory {
-    std::string path;
-    uint64_t numberFiles{};
-    uint64_t numberEmptyLines{};
-    uint64_t numberNonemptyLine{};
-    uint64_t numberLetters{};
-    uint64_t numberChars{};
-    uint64_t numberWords{};
+    StatisticOfDirectory();
 
-    friend std::ostream &operator<<(std::ostream &stream, const StatisticOfDirectory &statistic);
+    StatisticOfDirectory(const StatisticOfDirectory &);
+
+    StatisticOfDirectory &operator=(const StatisticOfDirectory &);
+
+    friend std::ostream &operator<<(std::ostream &, const StatisticOfDirectory &);
+
+    void join(const StatisticOfDirectory &);
+
+    std::atomic_int64_t numberFiles{};
+    std::atomic_int64_t numberEmptyLines{};
+    std::atomic_int64_t numberNonemptyLine{};
+    std::atomic_int64_t numberLetters{};
+    std::atomic_int64_t numberChars{};
+    std::atomic_int64_t numberWords{};
 };
 

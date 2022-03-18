@@ -1,19 +1,66 @@
 #include "AnalyzerForDirectory.h"
 
-StatisticOfDirectory AnalyzerForDirectory::process(const fs::path &pathForAnalyze) {
-    StatisticOfDirectory statistic{pathForAnalyze.string()};
-    for (auto const &dir_entry: fs::recursive_directory_iterator(pathForAnalyze)) {
-        std::cout << dir_entry << '\n';
-        if (dir_entry.is_regular_file()) {
-            ++statistic.numberFiles;
-            processFile(dir_entry, &statistic);
+std::mutex g_mutex;
+std::vector<std::exception_ptr> g_exceptions;
+
+void processException() {
+    for (auto &e: g_exceptions) {
+        try {
+            if (e != nullptr)
+                std::rethrow_exception(e);
+        }
+        catch (const std::exception &e) {
+            std::cout << e.what() << std::endl;
         }
     }
+    g_exceptions.clear();
+}
+
+AnalyzerForDirectory::AnalyzerForDirectory() : AnalyzerForDirectory(std::thread::hardware_concurrency()) {}
+
+AnalyzerForDirectory::AnalyzerForDirectory(size_t numberThreads) : numberThreads(numberThreads) {
+    if (numberThreads <= 0) {
+        throw std::invalid_argument("Received negative number of threads");
+    }
+    pool.reserve(numberThreads);
+}
+
+StatisticOfDirectory AnalyzerForDirectory::process(const fs::path &pathForAnalyze) {
+    StatisticOfDirectory statistic{};
+    FileIterator iterator{pathForAnalyze};
+    for (int i = 0; i < numberThreads; ++i) {
+        pool.emplace_back(std::thread(processInThread, std::ref(iterator), std::ref(statistic)));
+    }
+
+    for (auto &i: pool) {
+        i.join();
+    }
+    pool.clear();
+
+    processException();
     return statistic;
 }
 
-void AnalyzerForDirectory::processFile(const fs::directory_entry &entry, StatisticOfDirectory *statistic) {
-    std::ifstream ifstream{entry.path()};
+void AnalyzerForDirectory::processInThread(FileIterator &iterator, StatisticOfDirectory &commonStatistic) {
+    try {
+        StatisticOfDirectory localStatistic{};
+        while (!iterator.isAll()) {
+            fs::path pathToFile = iterator.next();
+            if (!pathToFile.empty()) {
+                processFile(pathToFile, &localStatistic);
+            }
+        }
+        commonStatistic.join(localStatistic);
+    }
+    catch (...) {
+        std::lock_guard<std::mutex> lock(g_mutex);
+        g_exceptions.push_back(std::current_exception());
+    }
+}
+
+void AnalyzerForDirectory::processFile(const fs::path &path, StatisticOfDirectory *statistic) {
+    ++statistic->numberFiles;
+    std::ifstream ifstream{path};
     std::string line;
     while (std::getline(ifstream, line)) {
         // count emtpy/nonempty strings
@@ -27,6 +74,7 @@ void AnalyzerForDirectory::processFile(const fs::directory_entry &entry, Statist
         // count words
         countWords(line, statistic);
     }
+    ifstream.close();
 }
 
 void AnalyzerForDirectory::countWords(const std::string &text, StatisticOfDirectory *statistic) {
@@ -48,3 +96,4 @@ void AnalyzerForDirectory::countWords(const std::string &text, StatisticOfDirect
 bool AnalyzerForDirectory::isSeparateChar(char c) {
     return std::isspace(c) || std::iscntrl(c) || std::ispunct(c);
 }
+
